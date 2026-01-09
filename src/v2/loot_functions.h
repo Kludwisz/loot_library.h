@@ -46,12 +46,12 @@ struct LootFunction {
 // ----------------------------------------------------------------------------------------
 // Roll count choice functions
 
-inline int roll_count_constant(uint64_t* rand, const int min, const int max)
+static inline int roll_count_constant(uint64_t* rand, const int min, const int max)
 {
 	return min;
 }
 
-inline int roll_count_uniform(uint64_t* rand, const int min, const int max)
+static inline int roll_count_uniform(uint64_t* rand, const int min, const int max)
 {
 	const int bound = max - min + 1;
 	return nextInt(rand, bound) + min;
