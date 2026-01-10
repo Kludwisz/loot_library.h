@@ -7,11 +7,12 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "cjson/CJSON.h"
+#include "cjson/cJSON.h"
 
 
 static ItemType get_item_type(const char* item_name)
 {
+	if (strstr(item_name, "_spear") != NULL) return SPEAR;
 	if (strstr(item_name, "_pickaxe") != NULL) return PICKAXE;
 	if (strstr(item_name, "_axe") != NULL) return AXE;
 	if (strstr(item_name, "_shovel") != NULL) return SHOVEL;
@@ -80,6 +81,8 @@ static Enchantment get_enchantment_from_name(const char* ench)
 	if (strcmp(ench, "minecraft:density") == 0) return DENSITY;
 	if (strcmp(ench, "minecraft:breach") == 0) return BREACH;
 	if (strcmp(ench, "minecraft:wind_burst") == 0) return WIND_BURST;
+
+	if (strcmp(ench, "minecraft:lunge") == 0) return LUNGE;
 					 
 	if (strcmp(ench, "minecraft:mending") == 0) return MENDING;
 	if (strcmp(ench, "minecraft:unbreaking") == 0) return UNBREAKING;
@@ -131,6 +134,12 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 	}
 	// check if the field actually defines an enchantment (list) or something like #minecraft:on_random_loot
 	if (cJSON_IsString(defined_enchants) && get_enchantment_from_name(defined_enchants->valuestring) == NO_ENCHANTMENT) {
+		// If it's a vanilla tag (e.g. "#minecraft:on_random_loot"), we need to
+		// respect the tag-defined enchantment list; otherwise fall back.
+		if (defined_enchants->valuestring && defined_enchants->valuestring[0] == '#') {
+			create_enchant_randomly_tag(loot_function, ctx->version, item_type, defined_enchants->valuestring, 1);
+			return;
+		}
 		create_enchant_randomly(loot_function, ctx->version, item_type, 1); // FIXME isTreasure is temporarily just set to true
 		return;
 	}
@@ -196,6 +205,19 @@ static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_
 	cJSON* treasure = cJSON_GetObjectItem(function_data, "treasure");
 	if (treasure != NULL)
 		is_treasure = (int)cJSON_IsTrue(treasure);
+
+	cJSON* options = cJSON_GetObjectItem(function_data, "options");
+	if (cJSON_IsString(options) && options->valuestring != NULL && options->valuestring[0] == '#') {
+		create_enchant_with_levels_tag(
+			loot_function,
+			ctx->version,
+			item_name, item_type,
+			min_level, max_level,
+			options->valuestring,
+			is_treasure
+		);
+		return;
+	}
 
 	create_enchant_with_levels(
 		loot_function, 

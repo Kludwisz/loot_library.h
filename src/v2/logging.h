@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #define LOG_ERROR(message) log_error(message, __FILE__, __LINE__)
-inline void log_error(const char* message, const char* file, const int line) {
+static inline void log_error(const char* message, const char* file, const int line) {
 	fprintf(stderr, "%s:%d - %s\n", file, line, message);
 }
 

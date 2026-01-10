@@ -46,12 +46,12 @@ struct LootFunction {
 // ----------------------------------------------------------------------------------------
 // Roll count choice functions
 
-inline int roll_count_constant(uint64_t* rand, const int min, const int max)
+static inline int roll_count_constant(uint64_t* rand, const int min, const int max)
 {
 	return min;
 }
 
-inline int roll_count_uniform(uint64_t* rand, const int min, const int max)
+static inline int roll_count_uniform(uint64_t* rand, const int min, const int max)
 {
 	const int bound = max - min + 1;
 	return nextInt(rand, bound) + min;
@@ -68,7 +68,9 @@ void create_no_op(LootFunction* lf);
 void create_enchant_randomly_one_enchant(LootFunction* lf, const Enchantment enchantment);
 void create_enchant_randomly_list(LootFunction* lf, const Enchantment* list, const int list_length);
 void create_enchant_randomly(LootFunction* lf, const MCVersion version, const ItemType item, const int isTreasure);
+void create_enchant_randomly_tag(LootFunction* lf, const MCVersion version, const ItemType item, const char* tag, const int allowTreasure);
 void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const int isTreasure);
+void create_enchant_with_levels_tag(LootFunction* lf, const MCVersion version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const char* tag, const int allowTreasure);
 
 const char* get_enchantment_name(const Enchantment enchantment);
 
@@ -103,7 +105,8 @@ enum ItemType {
 	CROSSBOW,
 	TRIDENT,
 	MACE,
-	BOOK
+	BOOK,
+	SPEAR
 };
 
 enum Enchantment {
@@ -176,7 +179,10 @@ enum Enchantment {
 	MENDING,
 	UNBREAKING,
 	CURSE_OF_VANISHING,
-	CURSE_OF_BINDING
+	CURSE_OF_BINDING,
+
+	// 1.21.11+
+	LUNGE
 };
 
 // test TODO remove
