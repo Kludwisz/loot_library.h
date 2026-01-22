@@ -59,3 +59,9 @@ example.out
 /LootLibrary.vcxproj.user
 
 /LootLibrary
+
+# CMake
+build/
+
+# IntelliJ
+.idea/
