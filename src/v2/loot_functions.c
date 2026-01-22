@@ -1,6 +1,7 @@
 #include "loot_functions.h"
 #include "rng.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
 
@@ -374,9 +375,28 @@ static int is_applicable(const Enchantment enchantment, const ItemType item, con
 	case BREACH:
 	case WIND_BURST:
 		return item == MACE;
+
+	case LUNGE:
+		return item == SPEAR;
 	}
 
 	return 0;
+}
+
+static int is_treasure_enchantment(const Enchantment enchantment)
+{
+	switch (enchantment)
+	{
+	case MENDING:
+	case CURSE_OF_BINDING:
+	case CURSE_OF_VANISHING:
+	case FROST_WALKER:
+	case SOUL_SPEED:
+	case SWIFT_SNEAK:
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 static int test_effective_level(const Enchantment enchantment, const int i, const int n)
@@ -533,6 +553,7 @@ static int test_effective_level(const Enchantment enchantment, const int i, cons
 			return 0;
 		break;
 	case DENSITY:
+	case LUNGE:
 		if ((n < 5 + (i - 1) * 8) || (n > 25 + (i - 1) * 8))
 			return 0;
 		break;
@@ -572,6 +593,7 @@ static int get_weight(const Enchantment enchantment)
 	case LOYALTY:
 	case QUICK_CHARGE:
 	case DENSITY:
+	case LUNGE:
 		return 5;
 
 	// very rare, weight = 1
@@ -602,7 +624,8 @@ static int get_max_level(const Enchantment enchantment)
 		3, 1, 4, // crossbows
 		5, 3, 3, 1, // trident
 		5, 4, 3, // mace
-		1, 3, 1, 1 // general
+		1, 3, 1, 1, // general
+		3 // lunge
 	};
 
 	return MAX_LEVEL[enchantment];
@@ -699,6 +722,92 @@ static int get_applicable_enchantments(const ItemType item, const MCVersion vers
 	return j; // return the number of applicable enchantments
 }
 
+static int is_tag_match(const char* tag, const char* name)
+{
+	if (!tag || !name)
+		return 0;
+	return strcmp(tag[0] == '#' ? tag + 1 : tag, name) == 0;
+}
+
+static int get_non_treasure_1_21(Enchantment out[], const int cap, const ItemType item, const MCVersion version)
+{
+	(void)version;
+	static const Enchantment non_treasure_1_21_11[] = {
+		PROTECTION,
+		FIRE_PROTECTION,
+		FEATHER_FALLING,
+		BLAST_PROTECTION,
+		PROJECTILE_PROTECTION,
+		RESPIRATION,
+		AQUA_AFFINITY,
+		THORNS,
+		DEPTH_STRIDER,
+		SHARPNESS,
+		SMITE,
+		BANE_OF_ARTHROPODS,
+		KNOCKBACK,
+		FIRE_ASPECT,
+		LOOTING,
+		SWEEPING_EDGE,
+		EFFICIENCY,
+		SILK_TOUCH,
+		UNBREAKING,
+		FORTUNE,
+		POWER,
+		PUNCH,
+		FLAME,
+		INFINITY_ENCHANTMENT,
+		LUCK_OF_THE_SEA,
+		LURE,
+		LOYALTY,
+		IMPALING,
+		RIPTIDE,
+		CHANNELING,
+		MULTISHOT,
+		QUICK_CHARGE,
+		PIERCING,
+		DENSITY,
+		BREACH,
+		LUNGE,
+	};
+
+	int n = 0;
+	const size_t len = sizeof(non_treasure_1_21_11) / sizeof(non_treasure_1_21_11[0]);
+	for (size_t i = 0; i < len; i++)
+	{
+		const Enchantment ench = non_treasure_1_21_11[i];
+		if (!is_applicable(ench, item, 1))
+			continue;
+		if (n < cap)
+			out[n] = ench;
+		n++;
+	}
+	return n <= cap ? n : cap;
+}
+
+static int get_on_random_loot_1_21(Enchantment out[], const int cap, const ItemType item, const MCVersion version)
+{
+	(void)version;
+	static const Enchantment tail[] = {
+		CURSE_OF_BINDING,
+		CURSE_OF_VANISHING,
+		FROST_WALKER,
+		MENDING,
+	};
+
+	int n = get_non_treasure_1_21(out, cap, item, version);
+	for (size_t i = 0; i < sizeof(tail) / sizeof(tail[0]); i++)
+	{
+		const Enchantment ench = tail[i];
+		if (!is_applicable(ench, item, 1))
+			continue;
+		if (n < cap)
+			out[n] = ench;
+		n++;
+	}
+	return n <= cap ? n : cap;
+}
+
 static int get_enchant_level_vector(const int level, const int applicable[], const int num_applicable, int* vec)
 {
 	int vecSize = 0;
@@ -777,13 +886,45 @@ void create_enchant_randomly(LootFunction* lf, const MCVersion version, const It
 	get_applicable_enchantments(item, version, applicable, 1);
 
 	// copy applicable enchants, along with their max levels
+	int out = 0;
 	for (int i = 0; i < enchantCount; i++)
 	{
-		lf->varparams_int[1 + 2*i] = applicable[i];
-		lf->varparams_int[1 + 2*i + 1] = get_max_level(applicable[i]);
+		const int ench = applicable[i];
+		if (!isTreasure && is_treasure_enchantment((Enchantment)ench))
+			continue;
+		lf->varparams_int[1 + 2*out] = ench;
+		lf->varparams_int[1 + 2*out + 1] = get_max_level(ench);
+		out++;
 	}
 
+	lf->varparams_int[0] = out;
+
 	lf->fun = enchant_randomly_function;
+}
+
+void create_enchant_randomly_tag(LootFunction* lf, const MCVersion version, const ItemType item, const char* tag, const int allowTreasure)
+{
+	Enchantment list[64];
+	int n = 0;
+
+	if (is_tag_match(tag, "minecraft:on_random_loot"))
+	{
+		(void)allowTreasure;
+		n = get_on_random_loot_1_21(list, (int)(sizeof(list) / sizeof(list[0])), item, version);
+	}
+	else if (is_tag_match(tag, "minecraft:non_treasure") || is_tag_match(tag, "minecraft:in_enchanting_table"))
+	{
+		(void)allowTreasure;
+		n = get_non_treasure_1_21(list, (int)(sizeof(list) / sizeof(list[0])), item, version);
+	}
+
+	if (n <= 0)
+	{
+		create_enchant_randomly(lf, version, item, allowTreasure);
+		return;
+	}
+
+	create_enchant_randomly_list(lf, list, n);
 }
 
 void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const int isTreasure)
@@ -806,6 +947,17 @@ void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const
 
 	int applicable[64];
 	int num_applicable = get_applicable_enchantments(item_type, version, applicable, 0);
+	if (!isTreasure)
+	{
+		int out = 0;
+		for (int i = 0; i < num_applicable; i++)
+		{
+			if (is_treasure_enchantment((Enchantment)applicable[i]))
+				continue;
+			applicable[out++] = applicable[i];
+		}
+		num_applicable = out;
+	}
 	
 	// fill the enchantment instance vector array
 	for (int level = 0; level < 2 * max_level; level++)
@@ -815,6 +967,56 @@ void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const
 		int* vec = malloc((3 * vector_size + 2) * sizeof(int));
 		get_enchant_level_vector(level, applicable, num_applicable, vec);
 		lf->varparams_int_arr[level+1] = vec;
+	}
+
+	lf->fun = enchant_with_levels_function;
+}
+
+void create_enchant_with_levels_tag(LootFunction* lf, const MCVersion version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const char* tag, const int allowTreasure)
+{
+	(void)item_type;
+	fill_incompatible_enchantments();
+
+	init_function(lf);
+	lf->varparams_int_arr = (int**)malloc((2 * max_level + 1) * sizeof(int*));
+	lf->varparams_int_arr_size = 2 * max_level + 1;
+	lf->params = (void*)lf->varparams_int_arr;
+
+	lf->varparams_int_arr[0] = (int*)malloc(3 * sizeof(int));
+	lf->varparams_int_arr[0][0] = get_enchantability(item_name);
+	lf->varparams_int_arr[0][1] = min_level;
+	lf->varparams_int_arr[0][2] = max_level;
+
+	int applicable[64];
+	int num_applicable = 0;
+	if (is_tag_match(tag, "minecraft:on_random_loot"))
+		num_applicable = get_on_random_loot_1_21((Enchantment*)applicable, 64, item_type, version);
+	else if (is_tag_match(tag, "minecraft:non_treasure") || is_tag_match(tag, "minecraft:in_enchanting_table"))
+		num_applicable = get_non_treasure_1_21((Enchantment*)applicable, 64, item_type, version);
+	else
+	{
+		create_enchant_with_levels(lf, version, item_name, item_type, min_level, max_level, allowTreasure);
+		return;
+	}
+
+	if (!allowTreasure)
+	{
+		int out = 0;
+		for (int i = 0; i < num_applicable; i++)
+		{
+			if (is_treasure_enchantment((Enchantment)applicable[i]))
+				continue;
+			applicable[out++] = applicable[i];
+		}
+		num_applicable = out;
+	}
+
+	for (int level = 0; level < 2 * max_level; level++)
+	{
+		int vector_size = get_enchant_level_vector(level, applicable, num_applicable, NULL);
+		int* vec = malloc((3 * vector_size + 2) * sizeof(int));
+		get_enchant_level_vector(level, applicable, num_applicable, vec);
+		lf->varparams_int_arr[level + 1] = vec;
 	}
 
 	lf->fun = enchant_with_levels_function;
@@ -875,7 +1077,8 @@ static const char* ENCHANT_NAMES[64] = {
 	"mending",
 	"unbreaking",
 	"curse_of_vanishing",
-	"curse_of_binding"
+	"curse_of_binding",
+	"lunge"
 };
 
 const char* get_enchantment_name(const Enchantment enchantment)
