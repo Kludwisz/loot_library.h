@@ -1,54 +1,59 @@
 # loot_library.h
-A C library for emulating Minecraft loot table generation. Still a WIP, API is still subject to sudden changes.
+A C library for emulating Minecraft loot table generation.
 
 While it's written in C, the entire library can be ported to CUDA very easily if needed.
 
-Currently supports ruined portals and desert temples.
-
-# example
-
-Searching through ruined portal loot seeds.
+# Example
+Taken from `src/examples/example.c`.
 ```C
 #include <stdio.h>
 
-#define LOOT_LIBRARY
-#include "src/loot_library.h"
+#include "../mc_loot.h"
 
-int main(void) {
-    LootTable table = init_ruined_portal_loot_table();
+static void print_loot(LootTableContext* ctx)
+{
+    for (int i = 0; i < ctx->generated_item_count; i++)
+    {
+        ItemStack* item_stack = &(ctx->generated_items[i]);
+        printf("%s x %d\n", get_item_name(ctx, item_stack->item), item_stack->count);
 
-    uint64_t loot_seed = 1111L;
-
-    LootItem items[64] = {0};
-    size_t num_items;
-    ruined_portal_loot(&table, loot_seed, items, &num_items);
-
-    for (size_t i = 0; i < num_items; i++) {
-        printf("%s x %d\n", item_names[items[i].item], items[i].quantity);
-        if (items[i].enchanted) {
-            printf("   %s %d\n", enchant_names[items[i].enchant], items[i].enchant_level);
+        for (int j = 0; j < item_stack->enchantment_count; j++)
+        {
+            EnchantInstance* ench = &(item_stack->enchantments[j]);
+            printf("    %s %d\n", get_enchantment_name(ench->enchantment), ench->level);
         }
     }
+}
 
+int main()
+{
+    LootTableContext ctx;
+    FILE* fptr = fopen("shipwreck_supply.json", "rb");
+    init_loot_table_file(fptr, &ctx, (MCVersion)v1_21);
+    free(fptr);
+    set_loot_seed(&ctx, -617667753675473930ULL);
+    generate_loot(&ctx);
+    print_loot(&ctx);
+    free_loot_table(&ctx);
     return 0;
 }
 ```
 
 # TODO
 ## Update 1
-done - load directly from FILE* instead of const char* to avoid relative filepath issues
-done - set_effect loot function (skips the effect call)
-- chained loot tables
+- [x] load directly from FILE* instead of const char* to avoid relative filepath issues
+- [x] set_effect loot function (skips the effect call)
+- [x] chained loot tables
 
 ## Update 2
-- multiple operation modes for LootTableContext: as-is, aggregated matching items, aggregated item-type matching items, predicate-match, full (indexed)
+- [ ] multiple operation modes for LootTableContext: as-is, aggregated matching items, aggregated item-type matching items, predicate-match, full (indexed)
 
 ## Update 3
-- loot sequence support
-- restructure project: move legacy code to a subfolder (src/legacy?)
-- update readme with v2 example of use
+- [ ] loot sequence support
+- [x] restructure project: move legacy code to a subfolder (src/legacy?)
+- [x] update readme with v2 example of use
 
 ## Update 4
-- full 1.13+ support (incl. 1.14.2?)
-- mass testing using source code
-- add more examples in src/examples
+- [x] full 1.13+ support (excluding 1.14.2)
+- [ ] mass testing using source code
+- [ ] add more examples in src/examples

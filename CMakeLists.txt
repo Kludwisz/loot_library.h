@@ -13,20 +13,19 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -DNDEBUG")
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g3 -DDEBUG")
 
 set(HEADERS
-        src/loot/loot_table_parser.h
-        src/v2/logging.h
-        src/v2/loot_functions.h
-        src/v2/loot_table_context.h
-        src/v2/mc_loot.h
-        src/v2/rng.h
-        src/v2/cjson/cJSON.h
+        src/logging.h
+        src/loot_functions.h
+        src/loot_table_context.h
+        src/mc_loot.h
+        src/rng.h
+        src/cjson/cJSON.h
 )
 set(SOURCES
-        src/v2/loot_functions.c
-        src/v2/loot_table_context.c
-        src/v2/loot_table_parser.c
-        src/v2/cjson/cJSON.c
-        src/examples/example_v2.c
+        src/loot_functions.c
+        src/loot_table_context.c
+        src/loot_table_parser.c
+        src/cjson/cJSON.c
+        src/examples/example.c
 )
 
 add_library(objects OBJECT ${SOURCES})
