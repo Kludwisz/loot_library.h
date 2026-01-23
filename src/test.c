@@ -106,9 +106,10 @@ int test_desert_temple()
 	
 	
 	free_loot_table(&ctx);
+    return 0;
 }
 
-void test_ancient_city()
+int test_ancient_city()
 {
 	LootTableContext ctx;
 
@@ -126,9 +127,10 @@ void test_ancient_city()
 	print_loot(&ctx);
 
 	free_loot_table(&ctx);
+    return 0;
 }
 
-void test_bt()
+int test_bt()
 {
 	LootTableContext ctx;
 
@@ -146,9 +148,10 @@ void test_bt()
 	print_loot(&ctx);
 
 	free_loot_table(&ctx);
+    return 0;
 }
 
-void test_bastion_other() {
+int test_bastion_other() {
 	LootTableContext ctx;
 
 	FILE* file = fopen("src/examples/bastion_other.json", "r");
@@ -165,9 +168,10 @@ void test_bastion_other() {
 	print_loot(&ctx);
 
 	free_loot_table(&ctx);
+    return 0;
 }
 
-void test_jungle_dispenser() {
+int test_jungle_dispenser() {
 	LootTableContext ctx;
 
 	FILE* file = fopen("src/examples/jungle_dispenser.json", "r");
@@ -184,6 +188,7 @@ void test_jungle_dispenser() {
 	print_loot(&ctx);
 
 	free_loot_table(&ctx);
+    return 0;
 }
 
 
