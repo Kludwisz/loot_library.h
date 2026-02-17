@@ -86,7 +86,7 @@ int test_desert_temple()
 	LootTableContext ctx;
 
 	FILE* file = fopen("src/examples/desert_pyramid.json", "r");
-	int ret = init_loot_table_file(file, &ctx, (MCVersion)v1_21);
+	int ret = init_loot_table_file(file, &ctx, (MCVersion)v1_18);
 	fclose(file);
 	if (ret != 0) {
 		fprintf(stderr, "Error initializing loot table\n");
@@ -113,15 +113,15 @@ int test_ancient_city()
 {
 	LootTableContext ctx;
 
-	FILE* file = fopen("src/examples/ancient_city.json", "r");
-	int ret = init_loot_table_file(file, &ctx, (MCVersion)v1_21);
+	FILE* file = fopen("src/examples/ac_1_21_11.json", "r");
+	int ret = init_loot_table_file(file, &ctx, (MCVersion)v1_21_11);
 	fclose(file);
 	if (ret != 0) {
 		fprintf(stderr, "Error initializing loot table\n");
 		return ret;
 	}
 
-	int64_t lootSeed = 217704587079581LL;
+	int64_t lootSeed = 4521007606537734820LL;
 	set_loot_seed(&ctx, lootSeed);
 	generate_loot(&ctx);
 	print_loot(&ctx);
@@ -191,19 +191,17 @@ int test_jungle_dispenser() {
     return 0;
 }
 
-
-extern void test_enchant_vec();
-extern void test_enchant_vec_2();
-extern void print_enchant_randomly_rp();
-
 int main()
 {
-	test_jungle_dispenser();
+	test_ancient_city();
+
+
+	//test_jungle_dispenser();
 	//test_bastion_other();
 	//print_enchant_randomly_rp();
 	//test_bt();
 	//test_ancient_city();
-	//test_enchant_vec_2();
+	//test_enchant_vec();
 	//test_desert_temple();
 	//test_shipwreck();
 	//test_ominous_vault();

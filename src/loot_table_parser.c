@@ -118,6 +118,10 @@ static int parse_set_count(LootFunction* loot_function, const cJSON* function_da
 static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_function, const cJSON* function_data, const char* item_name)
 {
 	const ItemType item_type = get_item_type(item_name);
+	int is_treasure = 0;
+	cJSON* treasure = cJSON_GetObjectItem(function_data, "treasure");
+	if (treasure != NULL)
+		is_treasure = (int)cJSON_IsTrue(treasure);
 
 	// if the "enchantments" field is present, we need to extract the enchantment name.
 	// otherwise, we can simply create the enchant randomly function
@@ -125,25 +129,25 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 	cJSON* defined_enchants = cJSON_GetObjectItem(function_data, "options");
 	if (defined_enchants == NULL && defined_enchants_legacy == NULL)
 	{
-		// no-restriction enchant randomly
-		create_enchant_randomly(loot_function, ctx->version, item_type, 1); // FIXME isTreasure is temporarily just set to true
+		if (ctx->version >= v1_21_9)
+			create_enchant_randomly_tag(loot_function, ctx->version, item_type, "#minecraft:in_enchanting_table", is_treasure);
+		else
+			create_enchant_randomly(loot_function, ctx->version, item_type, is_treasure);
 		return;
 	}
 	if (defined_enchants == NULL) {
 		defined_enchants = defined_enchants_legacy;
 	}
 	// check if the field actually defines an enchantment (list) or something like #minecraft:on_random_loot
-	if (cJSON_IsString(defined_enchants) && get_enchantment_from_name(defined_enchants->valuestring) == NO_ENCHANTMENT) {
-		// If it's a vanilla tag (e.g. "#minecraft:on_random_loot"), we need to
-		// respect the tag-defined enchantment list; otherwise fall back.
-		if (defined_enchants->valuestring && defined_enchants->valuestring[0] == '#') {
-			create_enchant_randomly_tag(loot_function, ctx->version, item_type, defined_enchants->valuestring, 1);
-			return;
-		}
-		create_enchant_randomly(loot_function, ctx->version, item_type, 1); // FIXME isTreasure is temporarily just set to true
+	if (cJSON_IsString(defined_enchants) && defined_enchants->valuestring && defined_enchants->valuestring[0] == '#') {
+		create_enchant_randomly_tag(loot_function, ctx->version, item_type, defined_enchants->valuestring, is_treasure);
 		return;
 	}
-
+	if (cJSON_IsString(defined_enchants) && get_enchantment_from_name(defined_enchants->valuestring) == NO_ENCHANTMENT) {
+		create_enchant_randomly(loot_function, ctx->version, item_type, is_treasure);
+		return;
+	}
+	
 	// enchant randomly with a given list of enchantments
 	// sometimes the field's value can be a single enchantment name, handle that case first
 	if (cJSON_IsString(defined_enchants)) {

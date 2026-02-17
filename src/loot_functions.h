@@ -67,11 +67,10 @@ void create_skip_calls(LootFunction* lf, const int skip_count);
 void create_no_op(LootFunction* lf);
 void create_enchant_randomly_one_enchant(LootFunction* lf, const Enchantment enchantment);
 void create_enchant_randomly_list(LootFunction* lf, const Enchantment* list, const int list_length);
-void create_enchant_randomly(LootFunction* lf, const MCVersion version, const ItemType item, const int isTreasure);
+void create_enchant_randomly(LootFunction* lf, const int version, const ItemType item, const int isTreasure);
 void create_enchant_randomly_tag(LootFunction* lf, const MCVersion version, const ItemType item, const char* tag, const int allowTreasure);
-void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const int isTreasure);
-void create_enchant_with_levels_tag(LootFunction* lf, const MCVersion version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const char* tag, const int allowTreasure);
-
+void create_enchant_with_levels(LootFunction* lf, const int version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const int isTreasure);
+void create_enchant_with_levels_tag(LootFunction* lf, const int version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const char* tag, const int allowTreasure);
 const char* get_enchantment_name(const Enchantment enchantment);
 
 // ----------------------------------------------------------------------------------------
@@ -86,7 +85,9 @@ enum MCVersion {
 	v1_18,
 	v1_19,
 	v1_20,
-	v1_21
+	v1_21,
+	v1_21_9,
+	v1_21_11
 };
 
 enum ItemType {
