@@ -22,7 +22,7 @@ int main()
     LootTableContext ctx;
     FILE* fptr = fopen("shipwreck_supply.json", "rb");
     init_loot_table_file(fptr, &ctx, (MCVersion)v1_21);
-    free(fptr);
+    fclose(fptr);
     set_loot_seed(&ctx, -617667753675473930ULL);
     generate_loot(&ctx);
     print_loot(&ctx);
