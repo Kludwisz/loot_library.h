@@ -186,7 +186,7 @@ static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const vo
 	// params[0][0] - item enchantability
 	// params[0][1] - min levels
 	// params[0][2] - max levels
-	// 
+	//
 	// params[i][0]	- number of applicable enchantment instances
 	// params[i][1] - total weight of the enchantment instances
 	// params[i][3k + 2] - enchantment id
@@ -339,10 +339,11 @@ static int is_applicable(const Enchantment enchantment, const ItemType item, con
 	case SHARPNESS:
 	case SMITE:
 	case BANE_OF_ARTHROPODS:
-		return item == SWORD || (use_overrides == 1 && item == AXE);
+		return item == SWORD || item == SPEAR || (use_overrides == 1 && item == AXE);
 	case KNOCKBACK:
 	case FIRE_ASPECT:
 	case LOOTING:
+		return item == SWORD || item == SPEAR;
 	case SWEEPING_EDGE:
 		return item == SWORD;
 
@@ -394,6 +395,7 @@ static int is_treasure_enchantment(const Enchantment enchantment)
 	case FROST_WALKER:
 	case SOUL_SPEED:
 	case SWIFT_SNEAK:
+    case WIND_BURST:
 		return 1;
 	default:
 		return 0;
