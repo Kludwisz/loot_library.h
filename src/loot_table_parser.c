@@ -118,10 +118,6 @@ static int parse_set_count(LootFunction* loot_function, const cJSON* function_da
 static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_function, const cJSON* function_data, const char* item_name)
 {
 	const ItemType item_type = get_item_type(item_name);
-	int is_treasure = 0;
-	cJSON* treasure = cJSON_GetObjectItem(function_data, "treasure");
-	if (treasure != NULL)
-		is_treasure = (int)cJSON_IsTrue(treasure);
 
 	// if the "enchantments" field is present, we need to extract the enchantment name.
 	// otherwise, we can simply create the enchant randomly function
@@ -130,9 +126,9 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 	if (defined_enchants == NULL && defined_enchants_legacy == NULL)
 	{
 		if (ctx->version >= v1_21_9)
-			create_enchant_randomly_tag(loot_function, ctx->version, item_type, "#minecraft:in_enchanting_table", is_treasure);
+			create_enchant_randomly_tag(loot_function, ctx->version, item_type, "#minecraft:in_enchanting_table");
 		else
-			create_enchant_randomly(loot_function, ctx->version, item_type, is_treasure);
+			create_enchant_randomly(loot_function, ctx->version, item_type);
 		return;
 	}
 	if (defined_enchants == NULL) {
@@ -140,11 +136,11 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 	}
 	// check if the field actually defines an enchantment (list) or something like #minecraft:on_random_loot
 	if (cJSON_IsString(defined_enchants) && defined_enchants->valuestring && defined_enchants->valuestring[0] == '#') {
-		create_enchant_randomly_tag(loot_function, ctx->version, item_type, defined_enchants->valuestring, is_treasure);
+		create_enchant_randomly_tag(loot_function, ctx->version, item_type, defined_enchants->valuestring);
 		return;
 	}
 	if (cJSON_IsString(defined_enchants) && get_enchantment_from_name(defined_enchants->valuestring) == NO_ENCHANTMENT) {
-		create_enchant_randomly(loot_function, ctx->version, item_type, is_treasure);
+		create_enchant_randomly(loot_function, ctx->version, item_type);
 		return;
 	}
 	
