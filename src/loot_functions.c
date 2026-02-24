@@ -929,7 +929,7 @@ void create_enchant_randomly_list(LootFunction* lf, const Enchantment* list, con
 	lf->fun = enchant_randomly_function;
 }
 
-void create_enchant_randomly(LootFunction* lf, const int version, const ItemType item, const int isTreasure)
+void create_enchant_randomly(LootFunction* lf, const int version, const ItemType item)
 {
 	int enchantCount = get_applicable_enchantments(item, version, NULL, 1);
 
@@ -937,46 +937,39 @@ void create_enchant_randomly(LootFunction* lf, const int version, const ItemType
 	// Allocate for the worst-case; we'll shrink enchantCount after filtering.
 	lf->varparams_int = (int*)malloc((2 * enchantCount + 1) * sizeof(int));
 	lf->params = lf->varparams_int;
+    lf->varparams_int[0] = enchantCount;
 
 	int applicable[64];
 	get_applicable_enchantments(item, version, applicable, 1);
 
 	// copy applicable enchants, along with their max levels
-	int out = 0;
 	for (int i = 0; i < enchantCount; i++)
 	{
 		const int ench = applicable[i];
-		if (!isTreasure && is_treasure_enchantment((Enchantment)ench))
-			continue;
-		lf->varparams_int[1 + 2 * out] = ench;
-		lf->varparams_int[1 + 2 * out + 1] = get_max_level(ench);
-		out++;
+		lf->varparams_int[1 + 2 * i] = ench;
+		lf->varparams_int[1 + 2 * i + 1] = get_max_level(ench);
 	}
-
-	lf->varparams_int[0] = out;
 
 	lf->fun = enchant_randomly_function;
 }
 
-void create_enchant_randomly_tag(LootFunction* lf, const MCVersion version, const ItemType item, const char* tag, const int allowTreasure)
+void create_enchant_randomly_tag(LootFunction* lf, const MCVersion version, const ItemType item, const char* tag)
 {
 	Enchantment list[64];
 	int n = 0;
 
 	if (is_tag_match(tag, "minecraft:on_random_loot"))
 	{
-		(void)allowTreasure;
 		n = get_on_random_loot_1_21(list, (int)(sizeof(list) / sizeof(list[0])), item, version);
 	}
 	else if (is_tag_match(tag, "minecraft:non_treasure") || is_tag_match(tag, "minecraft:in_enchanting_table"))
 	{
-		(void)allowTreasure;
 		n = get_non_treasure_1_21(list, (int)(sizeof(list) / sizeof(list[0])), item, version);
 	}
 
 	if (n <= 0)
 	{
-		create_enchant_randomly(lf, version, item, allowTreasure);
+		create_enchant_randomly(lf, version, item);
 		return;
 	}
 
@@ -1198,7 +1191,7 @@ void test_enchant_vec()
 void test_enchant_vec_2()
 {
 	LootFunction lf;
-	create_enchant_randomly(&lf, v1_21, BOOK, 1);
+	create_enchant_randomly(&lf, v1_21, BOOK);
 
 	printf("const bool extra_skip[%d] = { ", lf.varparams_int[0]);
 	for (int i = 0; i < lf.varparams_int[0]; i++)
@@ -1214,7 +1207,7 @@ void test_enchant_vec_2()
 void print_enchant_randomly_rp()
 {
 	LootFunction lf;
-	create_enchant_randomly(&lf, v1_21, BOOK, 1);
+	create_enchant_randomly(&lf, v1_21, BOOK);
 	
 	for (int i = 0; i < lf.varparams_int[0]; i++)
 	{
